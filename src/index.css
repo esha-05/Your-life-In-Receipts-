@@ -1,0 +1,77 @@
+@import "tailwindcss";
+@import "@fontsource-variable/fraunces";
+@import "@fontsource-variable/jetbrains-mono";
+
+@theme {
+  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-ink: #0c0b0a;
+  --color-ink-2: #141311;
+  --color-ink-3: #1d1b18;
+  --color-line: #2b2823;
+  --color-fg: #efe9dc;
+  --color-muted: #a8a08f;      /* 7.6:1 on ink */
+  --color-paper: #f4edde;
+  --color-paper-ink: #1a1712;
+  --color-paper-muted: #5f574a; /* 6.1:1 on paper */
+  --color-amber: #f5b74a;
+
+  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@layer base {
+  html { color-scheme: dark; scroll-behavior: smooth; }
+  body {
+    @apply bg-ink font-sans text-fg antialiased;
+    background-image:
+      radial-gradient(60rem 40rem at 85% -10%, rgb(245 183 74 / 0.10), transparent 60%),
+      radial-gradient(50rem 30rem at -10% 30%, rgb(108 182 255 / 0.06), transparent 60%);
+    background-attachment: fixed;
+  }
+  :focus-visible { outline: 2px solid var(--color-amber); outline-offset: 3px; border-radius: 6px; }
+  ::selection { background: var(--color-amber); color: var(--color-ink); }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+@layer components {
+  .eyebrow { @apply font-mono text-[0.7rem] uppercase tracking-[0.18em] text-muted; }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm text-fg
+      transition-colors hover:border-muted hover:bg-ink-3;
+  }
+  .chip[aria-pressed="true"] { @apply border-amber bg-amber/10 text-amber; }
+
+  /* Thermal-receipt paper */
+  .paper {
+    background: var(--color-paper);
+    color: var(--color-paper-ink);
+    font-family: var(--font-mono);
+    background-image: repeating-linear-gradient(0deg, transparent 0 3px, rgb(26 23 18 / 0.025) 3px 4px);
+  }
+  .zigzag { position: relative; margin-bottom: 14px; }
+  .zigzag::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -13px; height: 14px;
+    background:
+      linear-gradient(135deg, var(--color-paper) 7px, transparent 0) 0 0 / 14px 14px,
+      linear-gradient(225deg, var(--color-paper) 7px, transparent 0) 0 0 / 14px 14px;
+    background-repeat: repeat-x;
+  }
+  .leader { flex: 1; border-bottom: 2px dotted currentColor; opacity: 0.35; transform: translateY(-3px); min-width: 1rem; }
+}
+
+dialog::backdrop { background: rgb(6 5 4 / 0.72); backdrop-filter: blur(6px); }
+dialog[open] { animation: rise 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+body:has(dialog[open]) { overflow: hidden; }
+
+.web-node { outline: none; }
+.web-node:focus-visible .ring { stroke: var(--color-amber); }
