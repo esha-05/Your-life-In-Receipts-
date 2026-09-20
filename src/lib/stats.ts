@@ -1,5 +1,6 @@
 import type { Item, ReceiptType } from "@/types";
 import { TYPE_ORDER } from "./meta";
+import { categoryOf, isSpend } from "./finance";
 
 export interface Stats {
   total: number;
@@ -40,9 +41,9 @@ export function computeStats(items: Item[]): Stats {
     weekday[it.date.getDay()]++;
     inc(dayCounts, it.dayKey);
     for (const t of it.tags) inc(tags, t);
-    if (it.type === "purchase") {
+    if (isSpend(it)) {
       spend += it.amount ?? 0;
-      inc(cats, it.title.split(" - ")[0], it.amount ?? 0);
+      inc(cats, categoryOf(it), it.amount ?? 0);
     }
     if (it.type === "music") {
       ms += it.msPlayed ?? 0;

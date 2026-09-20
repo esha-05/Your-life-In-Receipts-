@@ -1,6 +1,6 @@
 import { CalendarDays, Flame, MapPin, Moon, PartyPopper, Repeat, Search, Zap, type LucideIcon } from "lucide-react";
 import type { Item, ReceiptType } from "@/types";
-import { byDay } from "./data";
+   import { categoryOf, isSpend } from "./finance";
 import { fmtShortDay, money, monthLong, monthShort, partOfDay } from "./format";
 import { HIDDEN_TAGS, MARKER_TAGS, WEEKDAYS, pct, spread, themeLabel } from "./themes";
 import { TYPE_META } from "./meta";
@@ -150,7 +150,7 @@ function nightOwl(items: Item[]): Finding | null {
 
 /** 5 — the priciest month. */
 function spendPeak(items: Item[]): Finding | null {
-  const buys = items.filter((i) => i.type === "purchase");
+  const buys = items.filter(isSpend);
   if (buys.length < 12) return null;
   const monthly = new Array(12).fill(0);
   for (const b of buys) monthly[b.date.getMonth()] += b.amount ?? 0;
@@ -159,7 +159,10 @@ function spendPeak(items: Item[]): Finding | null {
   const typical = others.length ? others.reduce((a, b) => a + b, 0) / others.length : 0;
   const inPeak = buys.filter((b) => b.date.getMonth() === peak);
   const cats = new Map<string, number>();
-  for (const b of inPeak) cats.set(b.title.split(" - ")[0], (cats.get(b.title.split(" - ")[0]) ?? 0) + (b.amount ?? 0));
+  for (const b of inPeak) {
+     const c = categoryOf(b);
+     cats.set(c, (cats.get(c) ?? 0) + (b.amount ?? 0));
+   }
   const [cat, catSum] = [...cats].sort((a, b) => b[1] - a[1])[0] ?? ["", 0];
   return {
     id: "spend-peak",
@@ -193,8 +196,14 @@ function repeatVisit(items: Item[]): Finding | null {
 }
 
 /** 7 — longest streak of days with something to show. */
-function streaks(): Finding | null {
-  const keys = [...byDay.keys()].sort();
+   function streaks(items: Item[]): Finding | null {
+     const byDay = new Map<string, Item[]>();
+     for (const it of items) {
+       const list = byDay.get(it.dayKey);
+       if (list) list.push(it);
+       else byDay.set(it.dayKey, [it]);
+     }
+     const keys = [...byDay.keys()].sort();
   if (keys.length < 10) return null;
   const day = (k: string) => Date.parse(`${k}T00:00:00Z`) / 86400000;
   let best = { len: 1, s: 0, e: 0 }, curS = 0, gap = { n: 0 };
@@ -239,6 +248,6 @@ function repeatSong(items: Item[]): Finding | null {
 }
 
 export function detectFindings(items: Item[]): Finding[] {
-  return [searchToPurchase(items), beforeEvents(items), weekdayLift(items), nightOwl(items), spendPeak(items), repeatVisit(items), streaks(), repeatSong(items)]
+  return [searchToPurchase(items), beforeEvents(items), weekdayLift(items), nightOwl(items), spendPeak(items), repeatVisit(items), streaks(items), repeatSong(items)]
     .filter((f): f is Finding => f !== null);
 }

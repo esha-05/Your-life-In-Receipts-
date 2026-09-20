@@ -1,13 +1,15 @@
 import raw from "@/data/life_receipts_2017.json";
-import type { Item, Receipt } from "@/types";
+import type { Item } from "@/types";
+import { parseReceipts } from "./validation";
 
-/** Parse once, drop anything unparseable, sort chronologically. */
-export const items: Item[] = (raw as unknown as Receipt[])
-  .map((r) => {
-    const date = new Date(r.timestamp);
-    return { ...r, tags: r.tags ?? [], date, dayKey: r.timestamp.slice(0, 10) } as Item;
-  })
-  .filter((r) => !Number.isNaN(r.date.getTime()))
+/** Validate at the boundary, parse dates once, sort chronologically. */
+const { receipts, rejected } = parseReceipts(raw);
+if (rejected > 0 && import.meta.env.DEV) {
+  console.warn(`[data] skipped ${rejected} malformed record(s) — run \`npm run check-data\``);
+}
+
+export const items: Item[] = receipts
+  .map((r): Item => ({ ...r, date: new Date(r.timestamp), dayKey: r.timestamp.slice(0, 10) }))
   .sort((a, b) => a.date.getTime() - b.date.getTime());
 
 export const byDay = new Map<string, Item[]>();
